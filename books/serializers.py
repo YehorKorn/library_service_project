@@ -24,3 +24,13 @@ class BookSerializer(serializers.ModelSerializer):
             "inventory",
             "daily_fee",
         )
+
+
+class BookListSerializer(BookSerializer):
+    author = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="full_name"
+    )
+
+
+class BookDetailSerializer(BookSerializer):
+    author = AuthorSerializer(many=True, read_only=True)
