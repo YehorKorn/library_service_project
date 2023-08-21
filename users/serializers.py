@@ -22,3 +22,8 @@ class UserSerializer(serializers.ModelSerializer):
             user.save()
 
         return user
+
+
+class UserListUpdateSerializer(UserSerializer):
+    class Meta(UserSerializer.Meta):
+        fields = ("id", "email", "password", "first_name", "last_name", "is_staff",)
