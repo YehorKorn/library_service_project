@@ -26,7 +26,7 @@ class Book(models.Model):
     title = models.CharField(
         max_length=155,
     )
-    author = models.ManyToManyField(Author, null=True, related_name="books")
+    author = models.ManyToManyField(Author, blank=True, related_name="books")
     cover = models.CharField(max_length=10, choices=CoverChoices.choices)
     inventory = models.IntegerField(validators=[MinValueValidator(0)])
     daily_fee = models.DecimalField(
