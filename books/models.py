@@ -23,7 +23,7 @@ class Book(models.Model):
     author = models.ManyToManyField(Author, null=True, related_name="books")
     cover = models.CharField(max_length=10, choices=CoverChoices.choices)
     inventory = models.IntegerField(validators=[MinValueValidator(0)])
-    daily_fee = models.DecimalField(max_digits=5, decimal_places=2)
+    daily_fee = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(0)])
 
     def __str__(self) -> str:
         return self.title
