@@ -3,8 +3,12 @@ from django.db import models
 
 
 class Author(models.Model):
-    first_name = models.CharField(max_length=65,)
-    last_name = models.CharField(max_length=65,)
+    first_name = models.CharField(
+        max_length=65,
+    )
+    last_name = models.CharField(
+        max_length=65,
+    )
 
     def __str__(self) -> str:
         return f"{self.first_name} {self.last_name}"
@@ -19,11 +23,15 @@ class Book(models.Model):
         HARD = "HARD"
         SOFT = "SOFT"
 
-    title = models.CharField(max_length=155,)
+    title = models.CharField(
+        max_length=155,
+    )
     author = models.ManyToManyField(Author, null=True, related_name="books")
     cover = models.CharField(max_length=10, choices=CoverChoices.choices)
     inventory = models.IntegerField(validators=[MinValueValidator(0)])
-    daily_fee = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(0)])
+    daily_fee = models.DecimalField(
+        max_digits=5, decimal_places=2, validators=[MinValueValidator(0)]
+    )
 
     def __str__(self) -> str:
         return self.title
