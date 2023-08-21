@@ -1,3 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
+from borrowings.models import Borrowings
+
+admin.site.register(Borrowings)
