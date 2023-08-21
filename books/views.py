@@ -1,12 +1,14 @@
 from rest_framework import viewsets
 
 from books.models import Book
+from books.paginations import BookPagination
 from books.serializers import BookSerializer, BookListSerializer, BookDetailSerializer
 
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
+    pagination_class = BookPagination
 
     @staticmethod
     def _params_to_ints(qs):
