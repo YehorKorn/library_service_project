@@ -30,3 +30,6 @@ class Book(models.Model):
 
     def decrease_inventory_by_1(self):
         self.inventory -= 1
+
+    def add_1_to_inventory(self):
+        self.inventory += 1
