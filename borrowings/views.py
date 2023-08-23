@@ -28,4 +28,10 @@ class BorrowingsListView(generics.ListAPIView):
 
         return queryset.distinct()
 
-# Create your views here.
+
+class BorrowingsDetailView(generics.RetrieveAPIView):
+    queryset = Borrowings.objects.prefetch_related(
+        "book__author",
+        "user",
+    )
+    serializer_class = BorrowingsDetailSerializer
