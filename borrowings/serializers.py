@@ -6,6 +6,8 @@ from borrowings.models import Borrowings
 
 
 class BorrowingsSerializer(serializers.ModelSerializer):
+    actual_return_date = serializers.DateField(required=False)
+
     def validate(self, attrs):
         data = super(BorrowingsSerializer, self).validate(attrs=attrs)
         Borrowings.validate_date(
