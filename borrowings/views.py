@@ -4,12 +4,24 @@ from borrowings.models import Borrowings
 from borrowings.serializers import BorrowingsListSerializer, BorrowingsDetailSerializer
 
 
-class BorrowingsListView(generics.ListAPIView):
+class BorrowingsListCreateView(generics.ListCreateAPIView):
     queryset = Borrowings.objects.prefetch_related(
         "book__author",
         "user",
     )
     serializer_class = BorrowingsListSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return BorrowingsCreateSerializer
+        if self.request.method == "GET":
+            return BorrowingsListSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        book = Book.objects.get(pk=serializer.data["book"])
+        book.inventory -= 1
+        book.save()
 
     def get_queryset(self):
         user_id = self.request.query_params.get("user_id")
