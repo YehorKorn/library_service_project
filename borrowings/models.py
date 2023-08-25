@@ -33,7 +33,7 @@ class Borrowings(models.Model):
 
     @staticmethod
     def validate_date(expected_return_date, error_to_raise, actual_return_date=None):
-        today = datetime.datetime.today().date()
+        today = datetime.date.today()
         if not expected_return_date >= today:
             raise error_to_raise(
                 {
