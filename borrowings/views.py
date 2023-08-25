@@ -1,7 +1,13 @@
 from rest_framework import generics
 
+from books.models import Book
 from borrowings.models import Borrowings
-from borrowings.serializers import BorrowingsListSerializer, BorrowingsDetailSerializer
+from borrowings.permissions import IsAdminOrIfIsAuthenticateCreateOrReadOnly
+from borrowings.serializers import (
+    BorrowingsListSerializer,
+    BorrowingsDetailSerializer,
+    BorrowingsCreateSerializer,
+)
 
 
 class BorrowingsListCreateView(generics.ListCreateAPIView):
@@ -38,7 +44,11 @@ class BorrowingsListCreateView(generics.ListCreateAPIView):
         if user_id:
             queryset = queryset.filter(user_id=user_id)
 
-        return queryset.distinct()
+        queryset = queryset.distinct()
+
+        if not self.request.user.is_staff:
+            return queryset.filter(user=self.request.user.id)
+        return queryset
 
 
 class BorrowingsDetailView(generics.RetrieveAPIView):
