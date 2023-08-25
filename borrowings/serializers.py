@@ -11,7 +11,13 @@ class BorrowingsSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         data = super(BorrowingsSerializer, self).validate(attrs=attrs)
         Borrowings.validate_date(
-            attrs["expected_return_date"], attrs["actual_return_date"], ValidationError
+            attrs["expected_return_date"],
+            ValidationError,
+            attrs.get("actual_return_date", None),
+        )
+        Borrowings.validate_book_inventory(
+            attrs["book"].inventory,
+            ValidationError,
         )
         return data
 
@@ -34,3 +40,13 @@ class BorrowingsListSerializer(BorrowingsSerializer):
 
 class BorrowingsDetailSerializer(BorrowingsSerializer):
     book = BookDetailSerializer(many=False, read_only=True)
+
+
+class BorrowingsCreateSerializer(BorrowingsSerializer):
+    class Meta:
+        model = Borrowings
+        fields = (
+            "id",
+            "expected_return_date",
+            "book",
+        )
