@@ -1,10 +1,10 @@
 from django.urls import path
 
-from borrowings.views import BorrowingsListView, BorrowingsDetailView
+from borrowings.views import BorrowingsListCreateView, BorrowingsDetailView
 
 app_name = "borrowings"
 
 urlpatterns = [
-    path("", BorrowingsListView.as_view(), name="borrowings-list"),
+    path("", BorrowingsListCreateView.as_view(), name="borrowings-list"),
     path("<int:pk>/", BorrowingsDetailView.as_view(), name="borrowings-detail"),
 ]

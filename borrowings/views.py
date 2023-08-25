@@ -1,15 +1,33 @@
 from rest_framework import generics
 
+from books.models import Book
 from borrowings.models import Borrowings
-from borrowings.serializers import BorrowingsListSerializer, BorrowingsDetailSerializer
+from borrowings.permissions import IsAdminOrIfIsAuthenticateCreateOrReadOnly
+from borrowings.serializers import (
+    BorrowingsListSerializer,
+    BorrowingsDetailSerializer,
+    BorrowingsCreateSerializer,
+)
 
 
-class BorrowingsListView(generics.ListAPIView):
+class BorrowingsListCreateView(generics.ListCreateAPIView):
     queryset = Borrowings.objects.prefetch_related(
         "book__author",
         "user",
     )
     serializer_class = BorrowingsListSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return BorrowingsCreateSerializer
+        if self.request.method == "GET":
+            return BorrowingsListSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        book = Book.objects.get(pk=serializer.data["book"])
+        book.inventory -= 1
+        book.save()
 
     def get_queryset(self):
         user_id = self.request.query_params.get("user_id")
@@ -26,7 +44,11 @@ class BorrowingsListView(generics.ListAPIView):
         if user_id:
             queryset = queryset.filter(user_id=user_id)
 
-        return queryset.distinct()
+        queryset = queryset.distinct()
+
+        if not self.request.user.is_staff:
+            return queryset.filter(user=self.request.user.id)
+        return queryset
 
 
 class BorrowingsDetailView(generics.RetrieveAPIView):
