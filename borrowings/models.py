@@ -37,13 +37,13 @@ class Borrowings(models.Model):
         if not expected_return_date >= today:
             raise error_to_raise(
                 {
-                    expected_return_date: f"{expected_return_date} can't be any sooner than today."
+                    "expected_return_date": f"expected_return_date can't be any sooner than today."
                 }
             )
         if actual_return_date and not actual_return_date == today:
             raise error_to_raise(
                 {
-                    actual_return_date: f"{actual_return_date} cannot be earlier or later than today."
+                    "actual_return_date": f"actual_return_date cannot be earlier or later than today."
                 }
             )
 
