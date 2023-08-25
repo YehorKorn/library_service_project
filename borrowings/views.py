@@ -2,6 +2,7 @@ from rest_framework import generics
 
 from books.models import Book
 from borrowings.models import Borrowings
+from borrowings.paginations import BorrowingsPagination
 from borrowings.permissions import IsAdminOrIfIsAuthenticateCreateOrReadOnly
 from borrowings.serializers import (
     BorrowingsListSerializer,
@@ -16,6 +17,8 @@ class BorrowingsListCreateView(generics.ListCreateAPIView):
         "user",
     )
     serializer_class = BorrowingsListSerializer
+    permission_classes = (IsAdminOrIfIsAuthenticateCreateOrReadOnly,)
+    pagination_class = BorrowingsPagination
 
     def get_serializer_class(self):
         if self.request.method == "POST":
