@@ -1,6 +1,8 @@
 import datetime
 
 from django.db import transaction
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError, NotAuthenticated
@@ -63,6 +65,37 @@ class BorrowingsListCreateView(generics.ListCreateAPIView):
             return queryset.filter(user=self.request.user.id)
         return queryset
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "is_active",
+                type=OpenApiTypes.STR,
+                description=(
+                    "Filter by bool value regardless of letter case, "
+                    "active borrowing or not. (ex. ?is_active=true; ?is_active=false)"
+                ),
+            ),
+            OpenApiParameter(
+                "user_id",
+                type=OpenApiTypes.INT,
+                description="Filter by user of borrowings. Can only be used by the admin (ex. ?user_id=1)",
+            ),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @extend_schema(
+        request=BorrowingsCreateSerializer,
+        responses={status.HTTP_201_CREATED: BorrowingsCreateSerializer},
+        description=(
+            "Creation takes -1 away from the book inventory. "
+            "Only an authorized user can create borrowings"
+        ),
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
 
 class BorrowingsDetailView(generics.RetrieveAPIView):
     queryset = Borrowings.objects.prefetch_related(
@@ -76,6 +109,12 @@ class BorrowingsDetailView(generics.RetrieveAPIView):
 @transaction.atomic()
 @api_view(["POST"])
 def borrowings_return_view(request, pk):
+    """
+    Return adds +1 to the book inventory, and changes
+    the actual_return_date to the current date.
+    A second return is not possible. Only borrowings
+    that belong to an authorized user can be returned.
+    """
     borrowing = get_object_or_404(Borrowings, pk=pk)
     if request.user != borrowing.user and not request.user.is_staff:
         raise NotAuthenticated

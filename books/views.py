@@ -1,3 +1,5 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets
 
 from books.models import Book
@@ -41,3 +43,20 @@ class BookViewSet(viewsets.ModelViewSet):
             return BookDetailSerializer
 
         return BookSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "authors",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by authors id (ex. ?authors=2,5)",
+            ),
+            OpenApiParameter(
+                "title",
+                type=OpenApiTypes.STR,
+                description="Filter by book title (ex. ?title=Some_book)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
