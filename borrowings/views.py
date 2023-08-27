@@ -130,4 +130,5 @@ def borrowings_return_view(request, pk):
     book.inventory += 1  # TODO use book.add_1_to_inventory
     book.save()
     borrowing.save()
+
     return Response(serializer.data, status=status.HTTP_200_OK)
