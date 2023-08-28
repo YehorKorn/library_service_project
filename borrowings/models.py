@@ -62,7 +62,6 @@ class Borrowing(models.Model):
             ValidationError,
             self.actual_return_date,
         )
-        Borrowing.validate_book_inventory(self.book.inventory, ValidationError)
 
     def save(
         self,

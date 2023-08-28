@@ -3,46 +3,50 @@ import datetime
 from django.db import transaction
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import generics, status
-from rest_framework.decorators import api_view
-from rest_framework.exceptions import ValidationError, NotAuthenticated
-from rest_framework.generics import get_object_or_404
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from books.models import Book
 from borrowings.models import Borrowing
 from borrowings.paginations import BorrowingPagination
 from borrowings.permissions import (
-    IsAdminOrIfIsAuthenticateCreateOrReadOnly,
+    IsAdminOrIfIsOwnerGetPost,
 )
 from borrowings.serializers import (
     BorrowingListSerializer,
     BorrowingDetailSerializer,
     BorrowingCreateSerializer,
-    BorrowingSerializer,
+    BorrowingSerializer, BorrowingReturnSerializer,
 )
 
 
-class BorrowingListCreateView(generics.ListCreateAPIView):
+class BorrowingViewSet(viewsets.ModelViewSet):
     queryset = Borrowing.objects.prefetch_related(
         "book__authors",
         "user",
     )
-    serializer_class = BorrowingListSerializer
-    permission_classes = (IsAdminOrIfIsAuthenticateCreateOrReadOnly,)
+    serializer_class = BorrowingSerializer
+    permission_classes = (IsAdminOrIfIsOwnerGetPost,)
     pagination_class = BorrowingPagination
 
     def get_serializer_class(self):
-        if self.request.method == "POST":
+        if self.action == "create":
             return BorrowingCreateSerializer
-        if self.request.method == "GET":
+
+        if self.action == "list":
             return BorrowingListSerializer
+
+        if self.action == "retrieve":
+            return BorrowingDetailSerializer
+
+        if self.action == "return_view":
+            return BorrowingReturnSerializer
+        return BorrowingSerializer
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-        book = Book.objects.get(pk=serializer.data["book"])
-        book.inventory -= 1
-        book.save()
 
     def get_queryset(self):
         user_id = self.request.query_params.get("user_id")
@@ -82,8 +86,8 @@ class BorrowingListCreateView(generics.ListCreateAPIView):
             ),
         ]
     )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     @extend_schema(
         request=BorrowingCreateSerializer,
@@ -93,41 +97,32 @@ class BorrowingListCreateView(generics.ListCreateAPIView):
             "Only an authorized user can create borrowings"
         ),
     )
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
-
-class BorrowingDetailView(generics.RetrieveAPIView):
-    queryset = Borrowing.objects.prefetch_related(
-        "book__authors",
-        "user",
+    @transaction.atomic()
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="return",
+        permission_classes=[IsAdminOrIfIsOwnerGetPost],
     )
-    serializer_class = BorrowingDetailSerializer
-    permission_classes = (IsAdminOrIfIsAuthenticateCreateOrReadOnly,)
-
-
-@transaction.atomic()
-@api_view(["POST"])
-def borrowing_return_view(request, pk):
-    """
-    Return adds +1 to the book inventory, and changes
-    the actual_return_date to the current date.
-    A second return is not possible. Only borrowings
-    that belong to an authorized user can be returned.
-    """
-    borrowing = get_object_or_404(Borrowing, pk=pk)
-    if request.user != borrowing.user and not request.user.is_staff:
-        raise NotAuthenticated
-    if not borrowing.is_active:
-        raise ValidationError(
-            {
-                "actual_return_date": f"This borrowing is no longer active, re-closing is not possible"
-            }
-        )
-    borrowing.actual_return_date = datetime.date.today()
-    serializer = BorrowingSerializer(borrowing)
-    book = Book.objects.get(pk=serializer.data["book"])
-    book.inventory += 1
-    book.save()
-    borrowing.save()
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    def return_view(self, request, pk=None):
+        """
+        Return adds +1 to the book inventory, and changes the actual_return_date to the current date.
+        A second return is not possible. Only borrowings that belong to an authorized user can be returned.
+        """
+        borrowing = self.get_object()
+        if not borrowing.is_active:
+            raise ValidationError(
+                {
+                    "actual_return_date": f"This borrowing is no longer active, re-closing is not possible"
+                }
+            )
+        borrowing.actual_return_date = datetime.date.today()
+        serializer = self.get_serializer(borrowing)
+        book = Book.objects.get(pk=borrowing.book.id)
+        book.inventory += 1
+        book.save()
+        borrowing.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
