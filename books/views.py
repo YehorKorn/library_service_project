@@ -31,7 +31,7 @@ class BookViewSet(viewsets.ModelViewSet):
 
         if authors:
             authors_ids = self._params_to_ints(authors)
-            queryset = queryset.filter(author__id__in=authors_ids)
+            queryset = queryset.filter(authors__id__in=authors_ids)
 
         return queryset.distinct()
 
