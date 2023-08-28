@@ -10,33 +10,33 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from books.models import Book
-from borrowings.models import Borrowings
-from borrowings.paginations import BorrowingsPagination
+from borrowings.models import Borrowing
+from borrowings.paginations import BorrowingPagination
 from borrowings.permissions import (
     IsAdminOrIfIsAuthenticateCreateOrReadOnly,
 )
 from borrowings.serializers import (
-    BorrowingsListSerializer,
-    BorrowingsDetailSerializer,
-    BorrowingsCreateSerializer,
-    BorrowingsSerializer,
+    BorrowingListSerializer,
+    BorrowingDetailSerializer,
+    BorrowingCreateSerializer,
+    BorrowingSerializer,
 )
 
 
-class BorrowingsListCreateView(generics.ListCreateAPIView):
-    queryset = Borrowings.objects.prefetch_related(
+class BorrowingListCreateView(generics.ListCreateAPIView):
+    queryset = Borrowing.objects.prefetch_related(
         "book__authors",
         "user",
     )
-    serializer_class = BorrowingsListSerializer
+    serializer_class = BorrowingListSerializer
     permission_classes = (IsAdminOrIfIsAuthenticateCreateOrReadOnly,)
-    pagination_class = BorrowingsPagination
+    pagination_class = BorrowingPagination
 
     def get_serializer_class(self):
         if self.request.method == "POST":
-            return BorrowingsCreateSerializer
+            return BorrowingCreateSerializer
         if self.request.method == "GET":
-            return BorrowingsListSerializer
+            return BorrowingListSerializer
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -86,8 +86,8 @@ class BorrowingsListCreateView(generics.ListCreateAPIView):
         return super().get(request, *args, **kwargs)
 
     @extend_schema(
-        request=BorrowingsCreateSerializer,
-        responses={status.HTTP_201_CREATED: BorrowingsCreateSerializer},
+        request=BorrowingCreateSerializer,
+        responses={status.HTTP_201_CREATED: BorrowingCreateSerializer},
         description=(
             "Creation takes -1 away from the book inventory. "
             "Only an authorized user can create borrowings"
@@ -97,25 +97,25 @@ class BorrowingsListCreateView(generics.ListCreateAPIView):
         return super().post(request, *args, **kwargs)
 
 
-class BorrowingsDetailView(generics.RetrieveAPIView):
-    queryset = Borrowings.objects.prefetch_related(
+class BorrowingDetailView(generics.RetrieveAPIView):
+    queryset = Borrowing.objects.prefetch_related(
         "book__authors",
         "user",
     )
-    serializer_class = BorrowingsDetailSerializer
+    serializer_class = BorrowingDetailSerializer
     permission_classes = (IsAdminOrIfIsAuthenticateCreateOrReadOnly,)
 
 
 @transaction.atomic()
 @api_view(["POST"])
-def borrowings_return_view(request, pk):
+def borrowing_return_view(request, pk):
     """
     Return adds +1 to the book inventory, and changes
     the actual_return_date to the current date.
     A second return is not possible. Only borrowings
     that belong to an authorized user can be returned.
     """
-    borrowing = get_object_or_404(Borrowings, pk=pk)
+    borrowing = get_object_or_404(Borrowing, pk=pk)
     if request.user != borrowing.user and not request.user.is_staff:
         raise NotAuthenticated
     if not borrowing.is_active:
@@ -125,7 +125,7 @@ def borrowings_return_view(request, pk):
             }
         )
     borrowing.actual_return_date = datetime.date.today()
-    serializer = BorrowingsSerializer(borrowing)
+    serializer = BorrowingSerializer(borrowing)
     book = Book.objects.get(pk=serializer.data["book"])
     book.inventory += 1
     book.save()

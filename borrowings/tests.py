@@ -8,8 +8,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from books.models import Book
-from borrowings.models import Borrowings
-from borrowings.serializers import BorrowingsListSerializer, BorrowingsDetailSerializer
+from borrowings.models import Borrowing
+from borrowings.serializers import BorrowingListSerializer, BorrowingDetailSerializer
 
 BORROWINGS_URL = reverse("borrowings:borrowings-list")
 EXPECTED_RETURN_DATE = datetime.date.today() + datetime.timedelta(days=3)
@@ -37,7 +37,7 @@ def sample_borrowing(user, **params):
     }
     defaults.update(params)
 
-    return Borrowings.objects.create(**defaults)
+    return Borrowing.objects.create(**defaults)
 
 
 def borrowing_detail_url(borrowings_id):
@@ -48,7 +48,7 @@ def borrowing_return_url(borrowings_id):
     return reverse("borrowings:borrowings-return", args=[borrowings_id])
 
 
-class UnauthenticatedBorrowingsApiTests(TestCase):
+class UnauthenticatedBorrowingApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
 
@@ -57,7 +57,7 @@ class UnauthenticatedBorrowingsApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class AuthenticatedBorrowingsApiTests(TestCase):
+class AuthenticatedBorrowingApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.other_user = get_user_model().objects.create_user(
@@ -77,9 +77,9 @@ class AuthenticatedBorrowingsApiTests(TestCase):
 
         res = self.client.get(BORROWINGS_URL)
 
-        serializer1 = BorrowingsListSerializer(borrowing1)
-        serializer2 = BorrowingsListSerializer(borrowing2)
-        serializer3 = BorrowingsListSerializer(borrowing3)
+        serializer1 = BorrowingListSerializer(borrowing1)
+        serializer2 = BorrowingListSerializer(borrowing2)
+        serializer3 = BorrowingListSerializer(borrowing3)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn(serializer1.data, res.data["results"])
@@ -99,9 +99,9 @@ class AuthenticatedBorrowingsApiTests(TestCase):
 
         res = self.client.get(BORROWINGS_URL, {"is_active": "false"})
 
-        serializer1 = BorrowingsListSerializer(borrowing1)
-        serializer2 = BorrowingsListSerializer(borrowing2)
-        serializer3 = BorrowingsListSerializer(borrowing3)
+        serializer1 = BorrowingListSerializer(borrowing1)
+        serializer2 = BorrowingListSerializer(borrowing2)
+        serializer3 = BorrowingListSerializer(borrowing3)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn(serializer1.data, res.data["results"])
@@ -113,7 +113,7 @@ class AuthenticatedBorrowingsApiTests(TestCase):
         url = borrowing_detail_url(borrowing.id)
         res = self.client.get(url)
 
-        serializer = BorrowingsDetailSerializer(borrowing)
+        serializer = BorrowingDetailSerializer(borrowing)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
@@ -134,7 +134,7 @@ class AuthenticatedBorrowingsApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(inventory_before - 1, inventory_after)
-        borrowings = Borrowings.objects.get(id=res.data["id"])
+        borrowings = Borrowing.objects.get(id=res.data["id"])
         payload.update({"book": book, "user": self.user})
         for key in payload.keys():
             self.assertEqual(payload[key], getattr(borrowings, key))
@@ -177,7 +177,7 @@ class AuthenticatedBorrowingsApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class AdminBorrowingsApiTests(TestCase):
+class AdminBorrowingApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.other_user = get_user_model().objects.create_user(
@@ -196,8 +196,8 @@ class AdminBorrowingsApiTests(TestCase):
 
         res = self.client.get(BORROWINGS_URL)
 
-        borrowings = Borrowings.objects.order_by("id")
-        serializer = BorrowingsListSerializer(borrowings, many=True)
+        borrowings = Borrowing.objects.order_by("id")
+        serializer = BorrowingListSerializer(borrowings, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["results"], serializer.data)
@@ -209,9 +209,9 @@ class AdminBorrowingsApiTests(TestCase):
 
         res = self.client.get(BORROWINGS_URL, {"user_id": {self.user.id}})
 
-        serializer1 = BorrowingsListSerializer(borrowing1)
-        serializer2 = BorrowingsListSerializer(borrowing2)
-        serializer3 = BorrowingsListSerializer(borrowing3)
+        serializer1 = BorrowingListSerializer(borrowing1)
+        serializer2 = BorrowingListSerializer(borrowing2)
+        serializer3 = BorrowingListSerializer(borrowing3)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn(serializer1.data, res.data["results"])

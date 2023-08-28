@@ -2,27 +2,27 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from books.serializers import BookDetailSerializer, BookListSerializer
-from borrowings.models import Borrowings
+from borrowings.models import Borrowing
 
 
-class BorrowingsSerializer(serializers.ModelSerializer):
+class BorrowingSerializer(serializers.ModelSerializer):
     actual_return_date = serializers.DateField(required=False)
 
     def validate(self, attrs):
-        data = super(BorrowingsSerializer, self).validate(attrs=attrs)
-        Borrowings.validate_date(
+        data = super(BorrowingSerializer, self).validate(attrs=attrs)
+        Borrowing.validate_date(
             attrs["expected_return_date"],
             ValidationError,
             attrs.get("actual_return_date", None),
         )
-        Borrowings.validate_book_inventory(
+        Borrowing.validate_book_inventory(
             attrs["book"].inventory,
             ValidationError,
         )
         return data
 
     class Meta:
-        model = Borrowings
+        model = Borrowing
         fields = (
             "id",
             "borrow_date",
@@ -34,17 +34,17 @@ class BorrowingsSerializer(serializers.ModelSerializer):
         )
 
 
-class BorrowingsListSerializer(BorrowingsSerializer):
+class BorrowingListSerializer(BorrowingSerializer):
     book = BookListSerializer(many=False, read_only=True)
 
 
-class BorrowingsDetailSerializer(BorrowingsSerializer):
+class BorrowingDetailSerializer(BorrowingSerializer):
     book = BookDetailSerializer(many=False, read_only=True)
 
 
-class BorrowingsCreateSerializer(BorrowingsSerializer):
+class BorrowingCreateSerializer(BorrowingSerializer):
     class Meta:
-        model = Borrowings
+        model = Borrowing
         fields = (
             "id",
             "expected_return_date",

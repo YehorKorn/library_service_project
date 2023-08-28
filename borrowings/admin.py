@@ -1,5 +1,5 @@
 from django.contrib import admin
 
-from borrowings.models import Borrowings
+from borrowings.models import Borrowing
 
-admin.site.register(Borrowings)
+admin.site.register(Borrowing)
