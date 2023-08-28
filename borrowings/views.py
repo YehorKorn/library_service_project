@@ -41,7 +41,7 @@ class BorrowingsListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
         book = Book.objects.get(pk=serializer.data["book"])
-        book.decrease_inventory_by_1()
+        book.inventory -= 1
         book.save()
 
     def get_queryset(self):
@@ -127,7 +127,7 @@ def borrowings_return_view(request, pk):
     borrowing.actual_return_date = datetime.date.today()
     serializer = BorrowingsSerializer(borrowing)
     book = Book.objects.get(pk=serializer.data["book"])
-    book.add_1_to_inventory()
+    book.inventory += 1
     book.save()
     borrowing.save()
     return Response(serializer.data, status=status.HTTP_200_OK)
