@@ -60,8 +60,8 @@ class UnauthenticatedBooksApiTests(TestCase):
         book1 = sample_book(title="Book 1")
         book2 = sample_book(title="Book 2")
 
-        book1.author.add(author1)
-        book2.author.add(author2)
+        book1.authors.add(author1)
+        book2.authors.add(author2)
 
         book3 = sample_book(title="Book without authors")
 
@@ -106,7 +106,7 @@ class UnauthenticatedBooksApiTests(TestCase):
         payload = {
             "title": "Title",
             "cover": "HARD",
-            "author": author.id,
+            "authors": author.id,
             "inventory": 2,
             "daily_fee": 0.50,
         }
@@ -130,7 +130,7 @@ class AuthenticatedBookApiTests(TestCase):
         payload = {
             "title": "Title",
             "cover": "HARD",
-            "author": author.id,
+            "authors": author.id,
             "inventory": 2,
             "daily_fee": 0.50,
         }
@@ -167,7 +167,7 @@ class AdminBookApiTests(TestCase):
         payload = {
             "title": "Title",
             "cover": "HARD",
-            "author": [author1.id, author2.id],
+            "authors": [author1.id, author2.id],
             "inventory": 2,
             "daily_fee": 0.50,
         }
@@ -175,12 +175,14 @@ class AdminBookApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         book = Book.objects.get(id=res.data["id"])
-        authors = book.author.all()
+        authors = book.authors.all()
         self.assertEqual(authors.count(), 2)
         self.assertIn(author1, authors)
         self.assertIn(author2, authors)
 
-    def test_raise_validation_error_when_created_book_with_inventory_less_than_zero(self):
+    def test_raise_validation_error_when_created_book_with_inventory_less_than_zero(
+        self,
+    ):
         payload = {
             "title": "Title",
             "cover": "HARD",
@@ -191,7 +193,9 @@ class AdminBookApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_raise_validation_error_when_created_book_with_daily_fee_less_than_zero(self):
+    def test_raise_validation_error_when_created_book_with_daily_fee_less_than_zero(
+        self,
+    ):
         payload = {
             "title": "Title",
             "cover": "HARD",

@@ -19,7 +19,7 @@ class BookSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "title",
-            "author",
+            "authors",
             "cover",
             "inventory",
             "daily_fee",
@@ -27,10 +27,10 @@ class BookSerializer(serializers.ModelSerializer):
 
 
 class BookListSerializer(BookSerializer):
-    author = serializers.SlugRelatedField(
+    authors = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="full_name"
     )
 
 
 class BookDetailSerializer(BookSerializer):
-    author = AuthorSerializer(many=True, read_only=True)
+    authors = AuthorSerializer(many=True, read_only=True)
