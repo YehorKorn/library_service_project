@@ -45,7 +45,7 @@ def borrowing_detail_url(borrowings_id):
 
 
 def borrowing_return_url(borrowings_id):
-    return reverse("borrowings:borrowings-return", args=[borrowings_id])
+    return reverse("borrowings:borrowings-return-view", args=[borrowings_id])
 
 
 class UnauthenticatedBorrowingApiTests(TestCase):
@@ -154,18 +154,19 @@ class AuthenticatedBorrowingApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_return_borrowing_and_addition_book_inventory_by_1(self):
-        book = sample_book(inventory=1)
+        book = sample_book(inventory=0)
         borrowing = sample_borrowing(book=book, user=self.user)
+
         url = borrowing_return_url(borrowing.id)
 
         res = self.client.post(url)
-
+        print(res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(
             res.data["actual_return_date"], datetime.date.today().strftime("%Y-%m-%d")
         )
         book.refresh_from_db()
-        self.assertEqual(book.inventory, 2)
+        self.assertEqual(book.inventory, 1)
 
     def test_raise_validation_error_when_twice_return_borrowing(self):
         borrowing = sample_borrowing(user=self.user)
