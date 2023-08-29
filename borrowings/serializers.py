@@ -54,9 +54,8 @@ class BorrowingCreateSerializer(BorrowingSerializer):
 
     def create(self, validated_data):
         borrowing = Borrowing.objects.create(**validated_data)
-        book = Book.objects.get(pk=borrowing.book.id)
-        book.inventory -= 1
-        book.save()
+        borrowing.book.inventory -= 1
+        borrowing.book.save()
         return borrowing
 
 
